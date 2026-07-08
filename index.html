@@ -55,8 +55,15 @@
     </div>
 
     <script>
-        // Идентификатор ведра на kvdb.io (уникальный для вашего проекта)
-        const BUCKET_ID = 'TwVNjmJ1fYfsS4Jxk3o7BJ';
+        const APP_KEY = 'ylsrbojp';
+        
+        function hexToStr(hex) {
+            let str = '';
+            for (let i = 0; i < hex.length; i += 2) {
+                str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+            }
+            return str;
+        }
         
         async function doRedirect() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -70,15 +77,23 @@
             }
             
             try {
-                // Получаем текущую ссылку на туннель из kvdb.io
-                const response = await fetch(`https://kvdb.io/${BUCKET_ID}/tunnel_url`);
+                // Получаем текущую ссылку на туннель из keyvalue.immanuel.co
+                const response = await fetch(`https://keyvalue.immanuel.co/api/KeyVal/GetValue/${APP_KEY}/tunnel_url`);
                 if (!response.ok) {
                     throw new Error('Не удалось получить адрес сервера.');
                 }
                 
-                const tunnelUrl = await response.text();
+                let hexUrl = await response.text();
+                // Убираем кавычки, которые возвращает API
+                hexUrl = hexUrl.replace(/^"|"$/g, '').trim();
+                
+                if (!hexUrl) {
+                    throw new Error('Адрес сервера пустой.');
+                }
+                
+                const tunnelUrl = hexToStr(hexUrl);
                 if (!tunnelUrl || !tunnelUrl.startsWith('http')) {
-                    throw new Error('Адрес сервера некорректен.');
+                    throw new Error('Декодированный адрес некорректен.');
                 }
                 
                 // Очищаем адрес от лишних пробелов/переносов
